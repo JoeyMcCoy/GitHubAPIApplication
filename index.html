@@ -1,0 +1,85 @@
+<html>
+<head>
+<title>GitHub API Application</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>		
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>		
+</head>
+<body>
+  <div id="container">  
+	<div class="col-lg-4">
+	<h3>Github API Application</h1>
+    <p>Search for a Github username below</p> 
+			<div class="input-group">
+				<input type="text" id="userInput" class="form-control" placeholder="Type Username...">
+			<span class="input-group-btn">
+				<button id="searchBtn" class="btn btn-secondary" type="button">Search</button>
+			</span>			
+			</div>
+			<div class="resultsContainer">
+				<div id="results" class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+<script>
+$(function(){
+  $('#searchBtn').on('click', function(e){
+    e.preventDefault();    
+    var username = $('#userInput').val();
+    var requri   = 'https://api.github.com/users/'+username;
+    var repouri  = 'https://api.github.com/users/'+username+'/repos';
+    
+    requestJSON(requri, function(json) {
+      if(json.message == "Not Found" || username == '') {
+        $('#results').html("<h2>No User Info Found</h2>");
+      }    
+      else {
+        var fullname   = json.name;
+        var username   = json.login;
+        var aviurl     = json.avatar_url;
+        var profileurl = json.html_url;
+        var numberOfFollowers = json.followers;
+        var numberFollowing = json.following;
+        var repos     = json.public_repos;
+        
+        if(fullname == undefined) { fullname = username; }
+        
+        var html = '<h2>'+fullname+' <span>(@<a href="'+profileurl+'" target="_blank">'+username+'</a>)</span></h2>';
+        html = html + '<div><a href="'+profileurl+'" target="_blank"><img src="'+aviurl+'" width="80" height="80" alt="'+username+'"></a>';
+        html = html + '<p>Followers: '+numberOfFollowers+' - Following: '+numberFollowing+'<br>Repos: '+repos+'</p></div>';
+        html = html + '<div class="repolist clearfix">';
+        
+        var repositories;
+        $.getJSON(repouri, function(json){
+          repositories = json;   
+          outputPageContent();                
+        });          
+        
+        function outputPageContent() {
+          if(repositories.length == 0) { html = html + '<p>No repositories</p></div>'; }
+          else {
+            html = html + '<p><strong>List of Repositories:</strong></p> <ul>';
+            $.each(repositories, function(index) {
+              html = html + '<li><a href="'+repositories[index].html_url+'" target="_blank">'+repositories[index].name + '</a></li>';
+            });
+            html = html + '</ul></div>'; 
+          }
+          $('#results').html(html);
+        } 
+      } 
+    }); 
+  }); 
+  
+  function requestJSON(url, callback) {
+    $.ajax({
+      url: url,
+      complete: function(xhr) {
+        callback.call(null, xhr.responseJSON);
+      }
+    });
+  }
+});
+</script>
